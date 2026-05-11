@@ -848,6 +848,21 @@
     .btn-primary:hover {
       background: linear-gradient(135deg, var(--theme-primary-dark) 0%, var(--theme-primary) 100%);
     }
+
+    /* Hover tooltip ka size bara karne ke liye */
+    .leaflet-tooltip {
+      font-size: 16px !important;
+      /* Aur bara text */
+      font-weight: 700 !important;
+      padding: 10px 18px !important;
+      background: rgba(0, 0, 0, 0.9) !important;
+      color: white !important;
+      border: 2px solid var(--theme-primary) !important;
+      border-radius: 12px !important;
+      white-space: nowrap !important;
+      font-family: 'Inter', sans-serif !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    }
   </style>
 </head>
 
@@ -1052,7 +1067,7 @@
       if (!layer.feature) return;
       layer.setStyle({ weight: 2.5, color: "#333", fillOpacity: 0.85 });
       if (!L.Browser.ie && !L.Browser.opera) layer.bringToFront();
-      const regionName = layer.feature.properties?.NAME_1 || "Unknown Region";
+      const regionName = layer.feature.properties?.CC_2 || layer.feature.properties?.NAME_1 || "Unknown Region";
       layer.bindTooltip(regionName, { sticky: true }).openTooltip();
     }
 
@@ -1555,14 +1570,26 @@
         if (!response.ok) throw new Error(`HTTP ${response.status} - GeoJSON not found`);
         const geojsonData = await response.json();
         if (geoJsonLayer) map.removeLayer(geoJsonLayer);
+
         geoJsonLayer = L.geoJSON(geojsonData, {
           style: styleRegion,
           onEachFeature: function (feature, layer) {
-            layer.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: onRegionClick });
+            // SIRF YAHAN CHANGE - CC_2 field se tooltip
+            const regionName = feature.properties?.CC_2 || feature.properties?.CC_2 || "Unknown Region";
+            layer.bindTooltip(regionName, { sticky: true }).openTooltip();
+
+            layer.on({
+              mouseover: highlightFeature,
+              mouseout: resetHighlight,
+              click: onRegionClick
+            });
           }
         }).addTo(map);
-        console.log("✅ Regions layer loaded");
-      } catch (err) { console.warn("⚠️ Could not load FBLS_Countries.geojson", err); }
+
+        console.log("✅ Regions layer loaded with CC_2 hover labels");
+      } catch (err) {
+        console.warn("⚠️ Could not load FBLS_Countries.geojson", err);
+      }
     }
 
     async function init() {
